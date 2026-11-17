@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Abhyudaya Techno Solutions Pvt Ltd{% endblock %}
+
+{% block content %}
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 440px;" class="card">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="ATS Logo" style="width: 140px; height: 85px; margin-bottom: 12px; object-fit: contain;">
+            <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">Abhyudaya Techno Solutions Pvt Ltd</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Smart Enterprise Leave Management System</p>
+        </div>
+
+        <form action="{{ url_for('auth.login') }}" method="POST" id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="identifier">Employee ID or Corporate Email</label>
+                <input type="text" id="identifier" name="identifier" class="form-control" placeholder="e.g. EMP001 or admin@company.com" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="form-label" for="password" style="margin: 0;">Password</label>
+                    <a href="{{ url_for('auth.forgot_password') }}" style="font-size: 0.8rem; color: var(--brand-primary); text-decoration: none;">Forgot password?</a>
+                </div>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-sign-in-alt"></i> Sign In to Account
+            </button>
+        </form>
+
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                New Employee? <a href="{{ url_for('auth.register') }}" style="color: var(--brand-primary); font-weight: 600; text-decoration: none;">Self-Register Here</a>
+            </p>
+        </div>
+
+        <!-- Pre-seeded Quick Demo Logins Box -->
+        <div style="margin-top: 24px; background: var(--bg-primary); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; text-align: center;">
+                <i class="fas fa-bolt" style="color: var(--warning);"></i> Quick Demo Logins
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fillLogin('ADM001', 'Password123!')">
+                    <i class="fas fa-user-shield" style="color: #6366F1;"></i> Admin
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fillLogin('HR001', 'Password123!')">
+                    <i class="fas fa-user-tie" style="color: #10B981;"></i> HR Manager
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="fillLogin('EMP001', 'Password123!')">
+                    <i class="fas fa-user" style="color: #06B6D4;"></i> Employee
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillLogin(empId, pass) {
+    document.getElementById('identifier').value = empId;
+    document.getElementById('password').value = pass;
+    document.getElementById('loginForm').submit();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Company Holidays 2026 - Smart HRMS{% endblock %}
+{% block page_title %}Official Company Holiday Calendar (2026){% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-calendar-alt" style="color: var(--brand-primary);"></i> 2026 Paid Holidays
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Day of Week</th>
+                    <th>Holiday Title</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in holidays %}
+                <tr>
+                    <td><strong>{{ h['holiday_date'] }}</strong></td>
+                    <td>{{ h['day_of_week'] }}</td>
+                    <td><strong style="color: var(--brand-primary);">{{ h['title'] }}</strong></td>
+                    <td><span class="badge badge-approved">{{ h['type'] }}</span></td>
+                    <td style="color: var(--text-secondary);">{{ h['description'] }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No holidays configured.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}HR Leave Approvals - Smart HRMS{% endblock %}
+{% block page_title %}HR Leave Approvals Workspace{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-user-check" style="color: var(--brand-primary);"></i> Pending Leave Approvals Queue
+        </div>
+    </div>
+
+    {% for req in requests %}
+    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+                <span class="badge badge-pending" style="font-size: 0.8rem; margin-bottom: 6px;">{{ req['request_number'] }} • {{ req['status'] }}</span>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">{{ req['applicant_name'] }} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">({{ req['emp_id'] }} - {{ req['dept_name'] }})</span></h3>
+            </div>
+            <div style="text-align: right;">
+                <strong style="font-size: 1.1rem; color: var(--brand-primary);">{{ req['total_days'] }} Day(s)</strong>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ req['start_date'] }} to {{ req['end_date'] }}</div>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 16px;">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Reason & Context</div>
+            <p style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0;">{{ req['reason'] }}</p>
+        </div>
+
+        <form action="{{ url_for('hr.handle_action', request_id=req['id']) }}" method="POST" style="display: flex; gap: 12px; align-items: center;">
+            <input type="text" name="comment" class="form-control" placeholder="Add HR approval comment / policy note..." style="flex: 1;">
+            
+            <button type="submit" name="action" value="approve" class="btn btn-success">
+                <i class="fas fa-check-double"></i> HR Approve
+            </button>
+
+            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                <i class="fas fa-times-circle"></i> HR Reject
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 48px;">
+        <i class="fas fa-check-double" style="font-size: 2.5rem; color: var(--success); margin-bottom: 12px;"></i>
+        <h3>No Pending Approvals</h3>
+        <p style="font-size: 0.9rem; margin-top: 4px;">There are currently no leave requests requiring HR review.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

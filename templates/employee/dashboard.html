@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard - Smart HRMS{% endblock %}
+{% block page_title %}Employee Self-Service Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="banner-text">
+        <h2>Welcome back, {{ user['full_name'] }}!</h2>
+        <p>{{ user['designation'] or 'Employee' }} • {{ user['department_name'] or 'General' }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('employee.apply_leave') }}" class="btn btn-primary" style="background: white; color: var(--brand-primary); font-weight: 700;">
+            <i class="fas fa-plus"></i> Apply for Leave
+        </a>
+    </div>
+</div>
+
+<!-- Leave Balances Grid -->
+<h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">
+    <i class="fas fa-wallet" style="color: var(--brand-primary);"></i> My Leave Balances (2026)
+</h3>
+
+<div class="grid-4">
+    {% for b in balances %}
+    <div class="balance-card">
+        <div class="balance-icon icon-{{ b['leave_type_code'].lower() }}">
+            <i class="fas fa-{% if b['leave_type_code'] == 'CL' %}calendar-check{% elif b['leave_type_code'] == 'SL' %}notes-medical{% elif b['leave_type_code'] == 'AL' %}umbrella-beach{% elif b['leave_type_code'] == 'ML' %}hospital{% else %}clock{% endif %}"></i>
+        </div>
+        <div class="balance-info">
+            <h4>{{ b['leave_type_name'] }}</h4>
+            <div class="balance-value">{{ b['remaining'] }} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">/ {{ b['total_allocated'] }}</span></div>
+            <div class="balance-sub">Used: {{ b['used'] }} • Pending: {{ b['pending'] }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Main Content 2-Column Grid -->
+<div class="grid-2">
+    <!-- Recent Applications -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-history" style="color: var(--brand-primary);"></i> Recent Leave Applications
+            </div>
+            <a href="{{ url_for('employee.history') }}" style="font-size: 0.85rem; color: var(--brand-primary); font-weight: 600; text-decoration: none;">View All</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Req #</th>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recent_requests %}
+                    <tr>
+                        <td><strong>{{ r['request_number'] }}</strong></td>
+                        <td>{{ r['leave_type_name'] }}</td>
+                        <td>{{ r['start_date'] }} <span style="color: var(--text-muted);">to</span> {{ r['end_date'] }}</td>
+                        <td>{{ r['total_days'] }}</td>
+                        <td>
+                            <span class="badge badge-{{ r['status'].lower().replace(' ', '-') }}">
+                                {{ r['status'] }}
+                            </span>
+                            {% if r['is_auto_approved'] %}
+                            <span class="badge badge-auto" title="{{ r['auto_approval_reason'] }}"><i class="fas fa-robot"></i> Auto</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r['status'] in ['Pending HR', 'Escalated'] %}
+                            <form action="{{ url_for('employee.cancel_leave', request_id=r['id']) }}" method="POST" onsubmit="return confirm('Cancel this pending leave application?');" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Cancel</button>
+                            </form>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No leave applications submitted yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right Side Widgets: Availability & Holidays -->
+    <div>
+        <!-- Team Availability Widget -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-users" style="color: var(--info);"></i> Department Staffing
+                </div>
+            </div>
+            <div class="avail-header">
+                <span>Team Availability Today</span>
+                <strong style="color: {% if avail['is_below_threshold'] %}var(--danger){% else %}var(--success){% endif %}; font-size: 1.1rem;">
+                    {{ avail['availability_pct'] }}%
+                </strong>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: {{ avail['availability_pct'] }}%; background-color: {% if avail['is_below_threshold'] %}var(--danger){% else %}var(--success){% endif %};"></div>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                Active Members: <strong>{{ avail['available_members'] }}</strong> / {{ avail['total_dept_members'] }} (Min threshold: {{ avail['min_threshold_pct'] }}%)
+            </div>
+        </div>
+
+        <!-- Upcoming Holidays -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-umbrella-beach" style="color: var(--warning);"></i> Upcoming Holidays
+                </div>
+                <a href="{{ url_for('employee.holidays') }}" style="font-size: 0.85rem; color: var(--brand-primary); font-weight: 600; text-decoration: none;">Full List</a>
+            </div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                {% for h in upcoming_holidays %}
+                <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border-color);">
+                    <div>
+                        <strong style="font-size: 0.9rem; color: var(--text-primary);">{{ h['title'] }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ h['day_of_week'] }}</div>
+                    </div>
+                    <span class="badge badge-auto" style="font-size: 0.75rem;">{{ h['holiday_date'] }}</span>
+                </li>
+                {% else %}
+                <li style="color: var(--text-muted); font-size: 0.85rem;">No upcoming holidays found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

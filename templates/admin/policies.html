@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Policies - Smart HRMS{% endblock %}
+{% block page_title %}Leave Policy & Auto-Approval Rule Engine{% endblock %}
+
+{% block content %}
+<!-- Leave Types Configuration -->
+<div class="card" style="margin-bottom: 28px;">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-gavel" style="color: var(--brand-primary);"></i> Leave Type Policy Matrix
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Code</th>
+                    <th>Max Days / Year</th>
+                    <th>Notice Period</th>
+                    <th>Requires HR Approval</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lt in leave_types %}
+                <tr>
+                    <td><strong>{{ lt['name'] }}</strong></td>
+                    <td><code>{{ lt['code'] }}</code></td>
+                    <form action="{{ url_for('admin.policies') }}" method="POST">
+                        <input type="hidden" name="action" value="update_leave_type">
+                        <input type="hidden" name="leave_type_id" value="{{ lt['id'] }}">
+                        <td>
+                            <input type="number" name="max_days_per_year" value="{{ lt['max_days_per_year'] }}" class="form-control" style="width: 80px;" required>
+                        </td>
+                        <td>
+                            <input type="number" name="notice_period_days" value="{{ lt['notice_period_days'] }}" class="form-control" style="width: 80px;" required>
+                        </td>
+                        <td>
+                            <select name="requires_hr_approval" class="form-control" style="width: 130px;">
+                                <option value="0" {% if lt['requires_hr_approval'] == 0 %}selected{% endif %}>No (TL/Auto)</option>
+                                <option value="1" {% if lt['requires_hr_approval'] == 1 %}selected{% endif %}>Yes (HR Direct)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Update</button>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Auto Approval Rules Configuration -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-robot" style="color: var(--info);"></i> Configurable Smart Auto-Approval & Escalation Rules
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rule Code</th>
+                    <th>Rule Name</th>
+                    <th>Condition Type</th>
+                    <th>Threshold</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Toggle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in leave_rules %}
+                <tr>
+                    <td><code>{{ r['rule_code'] }}</code></td>
+                    <td><strong>{{ r['rule_name'] }}</strong></td>
+                    <td><span class="badge badge-auto">{{ r['condition_type'] }}</span></td>
+                    <td>{{ r['threshold_value'] or '-' }}</td>
+                    <td>
+                        <span class="badge badge-{% if r['action'] == 'auto_approve' %}approved{% elif r['action'] == 'require_hr' %}escalated{% else %}pending{% endif %}">
+                            {{ r['action'] }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if r['is_enabled'] == 1 %}
+                        <span class="badge badge-approved">Active</span>
+                        {% else %}
+                        <span class="badge badge-cancelled">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin.policies') }}" method="POST">
+                            <input type="hidden" name="action" value="toggle_rule">
+                            <input type="hidden" name="rule_id" value="{{ r['id'] }}">
+                            <input type="hidden" name="is_enabled" value="{% if r['is_enabled'] == 1 %}0{% else %}1{% endif %}">
+                            <button type="submit" class="btn btn-sm {% if r['is_enabled'] == 1 %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if r['is_enabled'] == 1 %}<i class="fas fa-toggle-on"></i> Disable{% else %}<i class="fas fa-toggle-off"></i> Enable{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

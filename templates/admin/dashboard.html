@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Smart HRMS{% endblock %}
+{% block page_title %}System Administration & Configuration Workspace{% endblock %}
+
+{% block content %}
+<!-- Metrics Cards -->
+<div class="grid-4">
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-cl"><i class="fas fa-user-shield"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">HR Managers</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ hr_users_cnt }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-al"><i class="fas fa-users"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Active Users</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ total_users }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-hdl"><i class="fas fa-sitemap"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Departments</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ total_depts }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-sl"><i class="fas fa-clipboard-list"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Audit Logs Recorded</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ audit_logs_cnt }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Recent System Audit Logs -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-clipboard-list" style="color: var(--brand-primary);"></i> Security & System Audit Trail
+            </div>
+            <a href="{{ url_for('admin.audit_logs') }}" style="font-size: 0.85rem; color: var(--brand-primary); font-weight: 600; text-decoration: none;">View All Logs</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in recent_audits %}
+                    <tr>
+                        <td>
+                            <strong>{{ a['user_name'] or 'System' }}</strong>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">{{ a['role'] or 'N/A' }}</div>
+                        </td>
+                        <td><code>{{ a['action'] }}</code></td>
+                        <td><span class="badge badge-auto">{{ a['module'] }}</span></td>
+                        <td style="font-size: 0.78rem; color: var(--text-muted);">{{ a['timestamp'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Active HR Managers -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-user-tie" style="color: var(--success);"></i> Active HR Officers
+            </div>
+            <a href="{{ url_for('admin.hr_management') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add HR Account</a>
+        </div>
+
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
+            {% for hr in hr_list %}
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-primary);">{{ hr['full_name'] }}</strong>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">ID: {{ hr['emp_id'] }} • {{ hr['email'] }}</div>
+                </div>
+                <span class="badge badge-approved">HR Role</span>
+            </li>
+            {% else %}
+            <li style="color: var(--text-muted); font-size: 0.85rem;">No HR accounts found.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}My Leave History - Smart HRMS{% endblock %}
+{% block page_title %}My Leave Applications & Status Tracking{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-list-alt" style="color: var(--brand-primary);"></i> Application History
+        </div>
+
+        <!-- Filter Tags -->
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('employee.history', status='all') }}" class="btn btn-sm {% if current_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+            <a href="{{ url_for('employee.history', status='Approved') }}" class="btn btn-sm {% if current_filter == 'Approved' %}btn-primary{% else %}btn-secondary{% endif %}">Approved</a>
+            <a href="{{ url_for('employee.history', status='Pending HR') }}" class="btn btn-sm {% if current_filter == 'Pending HR' %}btn-primary{% else %}btn-secondary{% endif %}">Pending HR</a>
+            <a href="{{ url_for('employee.history', status='Rejected') }}" class="btn btn-sm {% if current_filter == 'Rejected' %}btn-primary{% else %}btn-secondary{% endif %}">Rejected</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Req #</th>
+                    <th>Type</th>
+                    <th>Dates</th>
+                    <th>Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Reviewer Comment</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in requests %}
+                <tr>
+                    <td><strong>{{ r['request_number'] }}</strong></td>
+                    <td>{{ r['leave_type_name'] }}</td>
+                    <td>{{ r['start_date'] }} <span style="color: var(--text-muted);">to</span> {{ r['end_date'] }}</td>
+                    <td>{{ r['total_days'] }}</td>
+                    <td style="max-width: 180px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ r['reason'] }}</td>
+                    <td>
+                        <span class="badge badge-{{ r['status'].lower().replace(' ', '-') }}">
+                            {{ r['status'] }}
+                        </span>
+                        {% if r['is_auto_approved'] %}
+                        <div style="margin-top: 2px;"><span class="badge badge-auto"><i class="fas fa-robot"></i> Auto-Approved</span></div>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.82rem; color: var(--text-secondary);">
+                        {% if r['hr_comment'] %}
+                        <div><strong>HR:</strong> {{ r['hr_comment'] }}</div>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r['status'] in ['Pending HR', 'Escalated'] %}
+                        <form action="{{ url_for('employee.cancel_leave', request_id=r['id']) }}" method="POST" onsubmit="return confirm('Cancel this pending request?');">
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-ban"></i> Cancel</button>
+                        </form>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                        No leave records found matching filter.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Logs - Smart HRMS{% endblock %}
+{% block page_title %}Security Audit & Activity Logs Registry{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+        <div class="card-title">
+            <i class="fas fa-shield-alt" style="color: var(--brand-primary);"></i> Audit Logs Trail
+        </div>
+
+        <form action="{{ url_for('admin.audit_logs') }}" method="GET" style="display: flex; gap: 10px;">
+            <input type="text" name="search" class="form-control" placeholder="Search by user, action, IP..." value="{{ current_search }}" style="width: 260px;">
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> Search Logs</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td><code>{{ log['id'] }}</code></td>
+                    <td><strong>{{ log['user_name'] or 'System' }}</strong></td>
+                    <td><span class="user-role-pill">{{ log['role'] or 'N/A' }}</span></td>
+                    <td><code>{{ log['action'] }}</code></td>
+                    <td><span class="badge badge-auto">{{ log['module'] }}</span></td>
+                    <td style="font-size: 0.85rem; color: var(--text-secondary); max-width: 250px;">{{ log['details'] }}</td>
+                    <td><code>{{ log['ip_address'] }}</code></td>
+                    <td style="font-size: 0.78rem; color: var(--text-muted);">{{ log['timestamp'] }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">No audit log records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

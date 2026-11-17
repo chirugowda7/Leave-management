@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Leave Balances - Smart HRMS{% endblock %}
+{% block page_title %}HR Leave Balance Adjustment Panel{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 840px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title">
+            <i class="fas fa-balance-scale" style="color: var(--brand-primary);"></i> Adjust Employee Leave Balances
+        </div>
+    </div>
+
+    <!-- Select Employee Form -->
+    <form action="{{ url_for('hr.leave_balances') }}" method="GET" style="display: flex; gap: 12px; margin-bottom: 24px;">
+        <select name="user_id" class="form-control" style="flex: 1;" required>
+            <option value="">-- Select Employee --</option>
+            {% for u in users %}
+            <option value="{{ u['id'] }}" {% if selected_user_id == u['id'] %}selected{% endif %}>
+                {{ u['full_name'] }} ({{ u['emp_id'] }})
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Load Balances</button>
+    </form>
+
+    {% if selected_user_id and balances %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Used Days</th>
+                    <th>Pending Days</th>
+                    <th>Remaining Days</th>
+                    <th>Total Allocated Days</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in balances %}
+                <tr>
+                    <td><strong>{{ b['leave_type_name'] }}</strong> ({{ b['leave_type_code'] }})</td>
+                    <td>{{ b['used'] }}</td>
+                    <td>{{ b['pending'] }}</td>
+                    <td><strong style="color: var(--brand-primary);">{{ b['remaining'] }}</strong></td>
+                    <td>
+                        <form action="{{ url_for('hr.leave_balances') }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="hidden" name="user_id" value="{{ selected_user_id }}">
+                            <input type="hidden" name="leave_type_id" value="{{ b['leave_type_id'] }}">
+                            <input type="number" step="0.5" name="total_allocated" value="{{ b['total_allocated'] }}" class="form-control" style="width: 90px;" required>
+                            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Save</button>
+                        </form>
+                    </td>
+                    <td><span class="badge badge-auto">Adjustable</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif selected_user_id %}
+    <div style="text-align: center; color: var(--text-muted); padding: 24px;">No balances initialized for selected user.</div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Management - Smart HRMS{% endblock %}
+{% block page_title %}Employee Role & Department Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+        <div class="card-title">
+            <i class="fas fa-id-card" style="color: var(--brand-primary);"></i> Employee Directory & Roles
+        </div>
+
+        <!-- Search & Filter Form -->
+        <form action="{{ url_for('hr.employee_management') }}" method="GET" style="display: flex; gap: 10px;">
+            <input type="text" name="search" class="form-control" placeholder="Search by name, ID, email..." value="{{ current_search }}" style="width: 220px;">
+            <select name="dept_id" class="form-control" style="width: 180px;">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d['id'] }}" {% if current_dept == str(d['id']) %}selected{% endif %}>{{ d['name'] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> Search</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Emp ID</th>
+                    <th>Full Name</th>
+                    <th>Current Role</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><code>{{ emp['emp_id'] }}</code></td>
+                    <td>
+                        <strong>{{ emp['full_name'] }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ emp['email'] }}</div>
+                    </td>
+                    <td><span class="user-role-pill">{{ emp['role'] }}</span></td>
+                    <td>{{ emp['dept_name'] or 'Unassigned' }}</td>
+                    <td>{{ emp['designation'] or 'N/A' }}</td>
+                    <td>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <a href="{{ url_for('hr.generate_id_card', emp_user_id=emp['id']) }}" class="btn btn-secondary btn-sm" title="Generate ID Card" style="color: var(--brand-primary); font-weight: 600;">
+                                <i class="fas fa-id-card"></i> ID Card
+                            </a>
+
+                            <button class="btn btn-primary btn-sm" onclick="openEditModal({{ emp['id'] }}, '{{ emp['full_name'] }}', '{{ emp['role'] }}', '{{ emp['department_id'] or '' }}', '{{ emp['designation'] or '' }}', '{{ emp['phone'] or '' }}', '{{ emp['blood_group'] or '' }}', '{{ emp['address'] or '' }}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+
+                            {% if emp['role'] == 'Employee' and emp['id'] != user['id'] %}
+                            <form action="{{ url_for('hr.delete_employee', emp_user_id=emp['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('PERMANENT WARNING: Delete employee {{ emp['full_name'] }} ({{ emp['emp_id'] }}) permanently?');">
+                                <button type="submit" class="btn btn-sm btn-danger" style="background-color: #EF4444; border-color: #EF4444;" title="Delete Employee">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">No employees found matching criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div id="editEmpModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 560px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);"><i class="fas fa-user-edit" style="color: var(--brand-primary);"></i> Update Employee Profile Record</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('editEmpModal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="editEmpForm" action="" method="POST">
+            <div class="form-group">
+                <label class="form-label">Employee Name</label>
+                <input type="text" id="modal_emp_name" class="form-control" disabled style="background-color: var(--bg-primary);">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="modal_role">Assign Role</label>
+                    <select id="modal_role" name="role" class="form-control" required>
+                        <option value="Employee">Employee</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal_dept">Transfer Department</label>
+                    <select id="modal_dept" name="department_id" class="form-control" required>
+                        {% for d in departments %}
+                        <option value="{{ d['id'] }}">{{ d['name'] }} ({{ d['code'] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal_designation">Job Title / Designation</label>
+                <input type="text" id="modal_designation" name="designation" class="form-control" placeholder="e.g. Senior Software Engineer">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="modal_phone">Contact Phone No</label>
+                    <input type="text" id="modal_phone" name="phone" class="form-control" placeholder="e.g. 9148765643">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="modal_blood_group">Blood Group</label>
+                    <input type="text" id="modal_blood_group" name="blood_group" class="form-control" placeholder="e.g. O +ve">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="modal_address">Residential Address</label>
+                <input type="text" id="modal_address" name="address" class="form-control" placeholder="e.g. Hubli">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-save"></i> Save Employee Profile Record
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal(id, name, role, deptId, desig, phone, bloodGroup, addr) {
+    document.getElementById('modal_emp_name').value = name;
+    document.getElementById('modal_role').value = role;
+    if (deptId) document.getElementById('modal_dept').value = deptId;
+    document.getElementById('modal_designation').value = desig || '';
+    document.getElementById('modal_phone').value = phone || '';
+    document.getElementById('modal_blood_group').value = bloodGroup || '';
+    document.getElementById('modal_address').value = addr || '';
+    document.getElementById('editEmpForm').action = "/hr/update-employee/" + id;
+    openModal('editEmpModal');
+}
+</script>
+{% endblock %}

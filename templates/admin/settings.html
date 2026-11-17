@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Smart HRMS{% endblock %}
+{% block page_title %}Company & System Global Settings{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <!-- Global Settings Form -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-cogs" style="color: var(--brand-primary);"></i> System Parameters
+            </div>
+        </div>
+
+        <form action="{{ url_for('admin.settings') }}" method="POST">
+            {% for s in settings %}
+            <div class="form-group">
+                <label class="form-label" for="{{ s['setting_key'] }}">{{ s['description'] or s['setting_key'] }}</label>
+                <input type="text" id="{{ s['setting_key'] }}" name="{{ s['setting_key'] }}" value="{{ s['setting_value'] }}" class="form-control" required>
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-save"></i> Save Global Settings
+            </button>
+        </form>
+    </div>
+
+    <!-- Admin Password Reset Tool for Any User -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-key" style="color: var(--danger);"></i> Admin Password Reset Override
+            </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            As an Administrator, you can manually reset the password for any active user account.
+        </p>
+
+        <form action="{{ url_for('admin.reset_user_password') }}" method="POST" onsubmit="return confirm('Override password for selected user?');">
+            <div class="form-group">
+                <label class="form-label" for="user_id">Target User Account *</label>
+                <input type="number" id="user_id" name="user_id" class="form-control" placeholder="Enter Target User ID (e.g. 1)" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="new_password">New Password *</label>
+                <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Min 8 characters" required>
+            </div>
+
+            <button type="submit" class="btn btn-danger" style="width: 100%;">
+                <i class="fas fa-unlock-alt"></i> Override User Password
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

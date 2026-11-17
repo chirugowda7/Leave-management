@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Official Employee ID Card - {{ emp['full_name'] }}{% endblock %}
+
+{% block page_title %}Employee ID Card Generator (HR Access Only){% endblock %}
+
+{% block content %}
+<style>
+.id-card-wrapper {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 24px 0 40px 0;
+}
+
+.id-card-frame {
+    width: 330px;
+    height: 515px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(0,0,0,0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: #FFFFFF;
+}
+
+.id-card-frame:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.id-card-frame img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: fill;
+}
+
+/* Action Bar & Printable Rules */
+.action-toolbar {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+@media print {
+    nav, .sidebar, .top-navbar, .action-toolbar, .alert, header, footer {
+        display: none !important;
+    }
+
+    body, .main-content {
+        background: #FFFFFF !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .id-card-wrapper {
+        gap: 20px;
+        padding: 0;
+    }
+
+    .id-card-frame {
+        box-shadow: none !important;
+        border: 1px solid #000000 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+
+<div class="action-toolbar">
+    <a href="{{ url_for('hr.employee_management') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Employee Directory
+    </a>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" onclick="showSide('front')">
+            <i class="fas fa-id-card"></i> Front Side
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="showSide('back')">
+            <i class="fas fa-qrcode"></i> Back Side
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="showSide('both')">
+            <i class="fas fa-columns"></i> Both Sides
+        </button>
+        <button type="button" class="btn btn-warning" onclick="openModal('editIdCardModal')" style="font-weight: 600; background-color: #F59E0B; border-color: #F59E0B; color: #FFFFFF;">
+            <i class="fas fa-edit"></i> Edit ID Card
+        </button>
+        <button type="button" onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print"></i> Print Official ID Card
+        </button>
+    </div>
+</div>
+
+<div class="id-card-wrapper" id="idCardContainer">
+
+    <!-- FRONT SIDE CARD (EXACT ORIGINAL DESIGN COMPOSITE) -->
+    <div class="id-card-frame" id="cardFront">
+        <img src="{{ url_for('hr.render_id_card_image_route', emp_user_id=emp['id'], side='front') }}" alt="Official Front ID Card - {{ emp['full_name'] }}">
+    </div>
+
+    <!-- BACK SIDE CARD (EXACT ORIGINAL DESIGN COMPOSITE) -->
+    <div class="id-card-frame" id="cardBack">
+        <img src="{{ url_for('hr.render_id_card_image_route', emp_user_id=emp['id'], side='back') }}" alt="Official Back ID Card - {{ emp['full_name'] }}">
+    </div>
+
+</div>
+
+<!-- EDIT ID CARD MODAL -->
+<div id="editIdCardModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 580px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                <i class="fas fa-id-card-alt" style="color: var(--brand-primary); margin-right: 8px;"></i> Edit ID Card Details
+            </h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('editIdCardModal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form action="{{ url_for('hr.update_id_card_details', emp_user_id=emp['id']) }}" method="POST" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="edit_full_name">Full Name <span style="color: #EF4444;">*</span></label>
+                    <input type="text" id="edit_full_name" name="full_name" class="form-control" value="{{ emp['full_name'] }}" required placeholder="e.g. Edward Miller">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_emp_id">Employee ID <span style="color: #EF4444;">*</span></label>
+                    <input type="text" id="edit_emp_id" name="emp_id" class="form-control" value="{{ emp['emp_id'] }}" required placeholder="e.g. 12019aa">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="edit_blood_group">Blood Group</label>
+                    <select id="edit_blood_group" name="blood_group" class="form-control">
+                        <option value="O +ve" {% if emp['blood_group'] == 'O +ve' %}selected{% endif %}>O +ve</option>
+                        <option value="A +ve" {% if emp['blood_group'] == 'A +ve' %}selected{% endif %}>A +ve</option>
+                        <option value="B +ve" {% if emp['blood_group'] == 'B +ve' %}selected{% endif %}>B +ve</option>
+                        <option value="AB +ve" {% if emp['blood_group'] == 'AB +ve' %}selected{% endif %}>AB +ve</option>
+                        <option value="O -ve" {% if emp['blood_group'] == 'O -ve' %}selected{% endif %}>O -ve</option>
+                        <option value="A -ve" {% if emp['blood_group'] == 'A -ve' %}selected{% endif %}>A -ve</option>
+                        <option value="B -ve" {% if emp['blood_group'] == 'B -ve' %}selected{% endif %}>B -ve</option>
+                        <option value="AB -ve" {% if emp['blood_group'] == 'AB -ve' %}selected{% endif %}>AB -ve</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_email">Email ID <span style="color: #EF4444;">*</span></label>
+                    <input type="email" id="edit_email" name="email" class="form-control" value="{{ emp['email'] }}" required placeholder="email@example.com">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="edit_phone">Contact Number</label>
+                    <input type="text" id="edit_phone" name="phone" class="form-control" value="{{ emp['phone'] or '' }}" placeholder="e.g. 9148765643">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_address">Address / City</label>
+                    <input type="text" id="edit_address" name="address" class="form-control" value="{{ emp['address'] or '' }}" placeholder="e.g. Hubli">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 8px;">
+                <label class="form-label" for="edit_profile_pic">Upload / Replace Employee Photo</label>
+                <input type="file" id="edit_profile_pic" name="profile_pic" class="form-control" accept="image/*">
+                <small style="color: var(--text-muted); display: block; margin-top: 4px;">Supported formats: PNG, JPG, JPEG, WEBP. Uploading a new photo will automatically update the photo on the front ID card.</small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editIdCardModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save & Update ID Card</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showSide(side) {
+    const front = document.getElementById('cardFront');
+    const back = document.getElementById('cardBack');
+    
+    if (side === 'front') {
+        front.style.display = 'block';
+        back.style.display = 'none';
+    } else if (side === 'back') {
+        front.style.display = 'none';
+        back.style.display = 'block';
+    } else {
+        front.style.display = 'block';
+        back.style.display = 'block';
+    }
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Close modal when clicking outside content box
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('editIdCardModal');
+    if (event.target === modal) {
+        closeModal('editIdCardModal');
+    }
+});
+</script>
+{% endblock %}

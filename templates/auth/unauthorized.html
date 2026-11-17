@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}403 Unauthorized - Smart HRMS{% endblock %}
+
+{% block content %}
+<div style="min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+    <div class="card" style="max-width: 480px; padding: 40px;">
+        <div style="width: 64px; height: 64px; background: var(--danger-light); color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 1.8rem;">
+            <i class="fas fa-user-lock"></i>
+        </div>
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">403 Access Denied</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">
+            You do not have the required role permissions to view this module.
+        </p>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart HRMS - Enterprise Leave Management System{% endblock %}</title>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Enterprise CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Chart.js for Dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        {% if session.get('user_id') %}
+        <aside class="sidebar">
+            <div>
+                {% set role = user['role'] if user else session.get('user_role') %}
+                <div class="sidebar-header" style="padding: 18px 16px;">
+                    <a href="{% if role == 'Admin' %}{{ url_for('admin.dashboard') }}{% elif role == 'HR' %}{{ url_for('hr.dashboard') }}{% else %}{{ url_for('employee.dashboard') }}{% endif %}" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="ATS Logo" style="width: 48px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                        <div>
+                            <div class="brand-title" style="font-size: 0.88rem; font-weight: 700; line-height: 1.2;">Abhyudaya Techno Solutions</div>
+                            <div class="brand-subtitle" style="font-size: 0.7rem; color: #94A3B8;">Pvt Ltd • {{ role }}</div>
+                        </div>
+                    </a>
+                </div>
+
+                <ul class="sidebar-menu">
+                    <!-- ROLE DEDICATED DASHBOARD LINK -->
+                    <div class="menu-category">Main Dashboard</div>
+                    {% if role == 'Admin' %}
+                    <li class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-shield-alt"></i> Admin Dashboard</a>
+                    </li>
+                    {% elif role == 'HR' %}
+                    <li class="{% if request.endpoint == 'hr.dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('hr.dashboard') }}"><i class="fas fa-chart-line"></i> HR Dashboard</a>
+                    </li>
+                    {% else %}
+                    <li class="{% if request.endpoint == 'employee.dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('employee.dashboard') }}"><i class="fas fa-home"></i> My Dashboard</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- SELF SERVICE (EMPLOYEE) -->
+                    <div class="menu-category">Self Service</div>
+                    {% if role != 'Employee' %}
+                    <li class="{% if request.endpoint == 'employee.dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('employee.dashboard') }}"><i class="fas fa-user-clock"></i> My Employee Portal</a>
+                    </li>
+                    {% endif %}
+                    <li class="{% if request.endpoint == 'employee.apply_leave' %}active{% endif %}">
+                        <a href="{{ url_for('employee.apply_leave') }}"><i class="fas fa-paper-plane"></i> Apply for Leave</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'employee.history' %}active{% endif %}">
+                        <a href="{{ url_for('employee.history') }}"><i class="fas fa-history"></i> Leave History</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'employee.holidays' %}active{% endif %}">
+                        <a href="{{ url_for('employee.holidays') }}"><i class="fas fa-calendar-alt"></i> Company Holidays</a>
+                    </li>
+
+                    <!-- HR MENU (ONLY HR, ADMIN) -->
+                    {% if role in ['HR', 'Admin'] %}
+                    <div class="menu-category">HR Operations</div>
+                    <li class="{% if request.endpoint == 'hr.pending_approvals' %}active{% endif %}">
+                        <a href="{{ url_for('hr.pending_approvals') }}"><i class="fas fa-user-check"></i> Leave Approvals</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'hr.employee_management' %}active{% endif %}">
+                        <a href="{{ url_for('hr.employee_management') }}"><i class="fas fa-id-card"></i> Employees & Roles</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'hr.leave_balances' %}active{% endif %}">
+                        <a href="{{ url_for('hr.leave_balances') }}"><i class="fas fa-balance-scale"></i> Adjust Balances</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'hr.reports' %}active{% endif %}">
+                        <a href="{{ url_for('hr.reports') }}"><i class="fas fa-file-export"></i> Reports & Analytics</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- ADMIN MENU (ONLY ADMIN) -->
+                    {% if role == 'Admin' %}
+                    <div class="menu-category">System Admin</div>
+                    <li class="{% if request.endpoint == 'admin.employee_management' %}active{% endif %}">
+                        <a href="{{ url_for('admin.employee_management') }}"><i class="fas fa-users-cog"></i> Manage Employees</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.hr_management' %}active{% endif %}">
+                        <a href="{{ url_for('admin.hr_management') }}"><i class="fas fa-user-shield"></i> HR Management</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.departments' %}active{% endif %}">
+                        <a href="{{ url_for('admin.departments') }}"><i class="fas fa-sitemap"></i> Departments</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.policies' %}active{% endif %}">
+                        <a href="{{ url_for('admin.policies') }}"><i class="fas fa-gavel"></i> Leave Policies</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.holidays' %}active{% endif %}">
+                        <a href="{{ url_for('admin.holidays') }}"><i class="fas fa-umbrella-beach"></i> Manage Holidays</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.audit_logs' %}active{% endif %}">
+                        <a href="{{ url_for('admin.audit_logs') }}"><i class="fas fa-clipboard-list"></i> Audit Logs</a>
+                    </li>
+                    <li class="{% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                        <a href="{{ url_for('admin.settings') }}"><i class="fas fa-cogs"></i> System Settings</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- ACCOUNT & SESSION -->
+                    <div class="menu-category">Account</div>
+                    <li>
+                        <a href="{{ url_for('auth.logout') }}" style="color: #F87171;"><i class="fas fa-sign-out-alt"></i> Logout Account</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    {% if user and user['profile_pic'] %}
+                    <img src="{{ url_for('static', filename='uploads/profile_pics/' + user['profile_pic']) }}" alt="Avatar" class="avatar" style="object-fit: cover; width: 36px; height: 36px; border-radius: 50%;">
+                    {% else %}
+                    <div class="avatar">
+                        {{ user['full_name'][0] if user else 'U' }}
+                    </div>
+                    {% endif %}
+                    <div class="user-info">
+                        <div class="user-name">{{ user['full_name'] if user else 'User' }}</div>
+                        <div class="user-role-pill">{{ user['role'] if user else role }}</div>
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm" style="padding: 6px 10px; font-size: 0.75rem;" title="Logout Account">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            {% if session.get('user_id') %}
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="navbar-left">
+                    <button class="btn btn-secondary btn-sm" id="mobileMenuBtn" style="display: none;">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+
+                <div class="navbar-right">
+                    <!-- Notifications -->
+                    <a href="{{ url_for('employee.notifications') }}" class="notif-bell-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_count and unread_count > 0 %}
+                        <span class="notif-badge">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+
+                    <!-- Industry Standard Multi-Theme Selector Dropdown -->
+                    <div class="theme-selector-dropdown">
+                        <button class="theme-dropdown-btn" id="themeDropdownBtn" title="Change Industry Theme">
+                            <i id="themeCurrentIcon" class="fas fa-palette"></i>
+                            <span id="themeCurrentLabel">Theme</span>
+                            <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
+                        </button>
+                        <div class="theme-dropdown-menu" id="themeDropdownMenu">
+                            <button type="button" class="theme-option-btn" data-theme-val="light">
+                                <i class="fas fa-sun" style="color: #4F46E5;"></i> Workday Light
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-val="ats-brand">
+                                <i class="fas fa-leaf" style="color: #10B981;"></i> ATS Brand
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-val="dark">
+                                <i class="fas fa-moon" style="color: #818CF8;"></i> Midnight Dark
+                            </button>
+                            <button type="button" class="theme-option-btn" data-theme-val="contrast">
+                                <i class="fas fa-adjust" style="color: #000000;"></i> High Contrast
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Link -->
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 6px;">
+                        {% if user and user['profile_pic'] %}
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + user['profile_pic']) }}" alt="Avatar" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                        <i class="fas fa-user-circle"></i>
+                        {% endif %}
+                        Profile
+                    </a>
+
+                    <!-- Prominent Top Navbar Logout Button -->
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); font-weight: 600;" title="Sign out of system">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </header>
+            {% endif %}
+
+            <main class="content-area">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Floating Speed-Dial Quick Action FAB Button -->
+    {% if session.get('user_id') %}
+    <div class="fab-container" id="fabContainer">
+        <button type="button" class="fab-main-btn" id="fabMainBtn" title="Quick Actions Menu">
+            <i class="fas fa-bolt"></i>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <a href="{{ url_for('employee.apply_leave') }}" class="fab-item" title="Apply for Leave">
+                <i class="fas fa-paper-plane"></i>
+                <span class="fab-label">Apply Leave</span>
+            </a>
+            <a href="{{ url_for('employee.history') }}" class="fab-item" title="Leave History">
+                <i class="fas fa-history"></i>
+                <span class="fab-label">Leave History</span>
+            </a>
+            <a href="{{ url_for('employee.holidays') }}" class="fab-item" title="Company Holidays">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="fab-label">Holidays</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ambient Floating Background Particles Canvas -->
+    <canvas id="ambientMeshCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; opacity: 0.35;"></canvas>
+
+    <!-- Application JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

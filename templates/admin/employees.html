@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Employees - Smart HRMS{% endblock %}
+{% block page_title %}Admin System Employee Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 16px;">
+        <div class="card-title">
+            <i class="fas fa-users-cog" style="color: var(--brand-primary);"></i> All Employees Directory
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <button class="btn btn-success btn-sm" onclick="openModal('createEmpModal')">
+                <i class="fas fa-user-plus"></i> Add New Employee
+            </button>
+        </div>
+    </div>
+
+    <!-- Multi-Criteria Filters -->
+    <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+        <form action="{{ url_for('admin.employee_management') }}" method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <input type="text" name="search" class="form-control" placeholder="Search by ID, name, email, designation..." value="{{ current_search }}" style="flex: 1; min-width: 200px;">
+            
+            <select name="dept_id" class="form-control" style="width: 170px;">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d['id'] }}" {% if current_dept == str(d['id']) %}selected{% endif %}>{{ d['name'] }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="role" class="form-control" style="width: 140px;">
+                <option value="">All Roles</option>
+                <option value="Employee" {% if current_role == 'Employee' %}selected{% endif %}>Employee</option>
+                <option value="HR" {% if current_role == 'HR' %}selected{% endif %}>HR</option>
+            </select>
+
+            <select name="status" class="form-control" style="width: 130px;">
+                <option value="">All Statuses</option>
+                <option value="Active" {% if current_status == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if current_status == 'Inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Apply Filters</button>
+            {% if current_search or current_dept or current_role or current_status %}
+            <a href="{{ url_for('admin.employee_management') }}" class="btn btn-secondary btn-sm"><i class="fas fa-undo"></i> Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Employee Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Emp ID</th>
+                    <th>Employee</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><code>{{ emp['emp_id'] }}</code></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {% if emp['profile_pic'] %}
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + emp['profile_pic']) }}" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <div class="avatar" style="width: 32px; height: 32px; font-size: 0.85rem; background: linear-gradient(135deg, var(--brand-primary), #818CF8); display: flex; align-items: center; justify-content: center; color: white; border-radius: 50%; font-weight: bold;">
+                                {{ emp['full_name'][0] }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ emp['full_name'] }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ emp['email'] }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="user-role-pill">{{ emp['role'] }}</span></td>
+                    <td>{{ emp['dept_name'] or 'Unassigned' }}</td>
+                    <td>{{ emp['designation'] or 'N/A' }}</td>
+                    <td>
+                        <span class="badge {% if emp['status'] == 'Active' %}badge-approved{% else %}badge-rejected{% endif %}">
+                            {{ emp['status'] }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <!-- Edit Record -->
+                            <button class="btn btn-secondary btn-sm" onclick="openEditEmpModal({{ emp['id'] }}, '{{ emp['emp_id'] }}', '{{ emp['full_name'] }}', '{{ emp['email'] }}', '{{ emp['role'] }}', '{{ emp['department_id'] or '' }}', '{{ emp['designation'] or '' }}', '{{ emp['phone'] or '' }}', '{{ emp['status'] }}')" title="Edit Record">
+                                <i class="fas fa-edit"></i>
+                            </button>
+
+                            <!-- Reset Password -->
+                            <button class="btn btn-secondary btn-sm" onclick="openResetModal({{ emp['id'] }}, '{{ emp['full_name'] }}', '{{ emp['emp_id'] }}')" title="Reset Password" style="color: var(--warning);">
+                                <i class="fas fa-key"></i>
+                            </button>
+
+                            <!-- Toggle Active/Inactive -->
+                            <form action="{{ url_for('admin.employee_management') }}" method="POST" style="display: inline;" onsubmit="return confirm('Change status for {{ emp['full_name'] }}?');">
+                                <input type="hidden" name="action" value="toggle_status">
+                                <input type="hidden" name="user_id" value="{{ emp['id'] }}">
+                                <button type="submit" class="btn btn-sm {% if emp['status'] == 'Active' %}btn-secondary{% else %}btn-success{% endif %}" title="{% if emp['status'] == 'Active' %}Deactivate{% else %}Activate{% endif %}">
+                                    <i class="fas fa-{% if emp['status'] == 'Active' %}user-slash{% else %}user-check{% endif %}"></i>
+                                </button>
+                            </form>
+
+                            <!-- Delete Employee -->
+                            {% if emp['role'] != 'Admin' and emp['id'] != user['id'] %}
+                            <form action="{{ url_for('admin.employee_management') }}" method="POST" style="display: inline;" onsubmit="return confirm('PERMANENT WARNING: Are you sure you want to permanently delete employee {{ emp['full_name'] }} ({{ emp['emp_id'] }}) and all associated records?');">
+                                <input type="hidden" name="action" value="delete_employee">
+                                <input type="hidden" name="user_id" value="{{ emp['id'] }}">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Employee" style="background-color: #EF4444; border-color: #EF4444;">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 36px;">No employees match the requested filter criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Employee Modal -->
+<div id="createEmpModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);"><i class="fas fa-user-plus" style="color: var(--success);"></i> Add New Employee</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('createEmpModal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form action="{{ url_for('admin.employee_management') }}" method="POST">
+            <input type="hidden" name="action" value="create_employee">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="new_emp_id">Employee ID *</label>
+                    <input type="text" id="new_emp_id" name="emp_id" class="form-control" placeholder="e.g. EMP007" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_full_name">Full Name *</label>
+                    <input type="text" id="new_full_name" name="full_name" class="form-control" placeholder="e.g. John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_email">Corporate Email *</label>
+                    <input type="email" id="new_email" name="email" class="form-control" placeholder="e.g. j.doe@company.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_password">Initial Password *</label>
+                    <input type="password" id="new_password" name="password" class="form-control" placeholder="Min 8 characters" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_role">System Role *</label>
+                    <select id="new_role" name="role" class="form-control" required>
+                        <option value="Employee">Employee</option>
+                        <option value="HR">HR Officer</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_dept">Department *</label>
+                    <select id="new_dept" name="department_id" class="form-control" required>
+                        {% for d in departments %}
+                        <option value="{{ d['id'] }}">{{ d['name'] }} ({{ d['code'] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_designation">Job Designation</label>
+                    <input type="text" id="new_designation" name="designation" class="form-control" placeholder="e.g. Senior Software Engineer">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="new_phone">Phone Number</label>
+                    <input type="text" id="new_phone" name="phone" class="form-control" placeholder="+1 555-0199">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 16px;">
+                <i class="fas fa-check-circle"></i> Create & Provision Employee
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div id="editEmpModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);"><i class="fas fa-edit" style="color: var(--brand-primary);"></i> Edit Employee Record</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('editEmpModal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="editEmpForm" action="{{ url_for('admin.employee_management') }}" method="POST">
+            <input type="hidden" name="action" value="update_employee">
+            <input type="hidden" id="edit_user_id" name="user_id" value="">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Employee ID</label>
+                    <input type="text" id="edit_emp_id" class="form-control" disabled style="background-color: var(--bg-primary);">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="edit_email" class="form-control" disabled style="background-color: var(--bg-primary);">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_full_name">Full Name *</label>
+                    <input type="text" id="edit_full_name" name="full_name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_role">Role *</label>
+                    <select id="edit_role" name="role" class="form-control" required>
+                        <option value="Employee">Employee</option>
+                        <option value="HR">HR</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_dept">Department *</label>
+                    <select id="edit_dept" name="department_id" class="form-control" required>
+                        {% for d in departments %}
+                        <option value="{{ d['id'] }}">{{ d['name'] }} ({{ d['code'] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_status">Account Status *</label>
+                    <select id="edit_status" name="status" class="form-control" required>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_designation">Job Designation</label>
+                    <input type="text" id="edit_designation" name="designation" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit_phone">Phone Number</label>
+                    <input type="text" id="edit_phone" name="phone" class="form-control">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                <i class="fas fa-save"></i> Save Employee Updates
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 450px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);"><i class="fas fa-key" style="color: var(--warning);"></i> Reset Employee Password</h3>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('resetModal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form action="{{ url_for('admin.employee_management') }}" method="POST">
+            <input type="hidden" name="action" value="reset_password">
+            <input type="hidden" id="reset_user_id" name="user_id" value="">
+
+            <div class="form-group">
+                <label class="form-label">Employee Target</label>
+                <input type="text" id="reset_user_name" class="form-control" disabled style="background-color: var(--bg-primary);">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="reset_new_password">New Password *</label>
+                <input type="password" id="reset_new_password" name="new_password" class="form-control" placeholder="Min. 8 characters" required>
+            </div>
+
+            <button type="submit" class="btn btn-warning" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-key"></i> Update Password
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditEmpModal(id, empId, name, email, role, deptId, desig, phone, status) {
+    document.getElementById('edit_user_id').value = id;
+    document.getElementById('edit_emp_id').value = empId;
+    document.getElementById('edit_full_name').value = name;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_role').value = role;
+    if (deptId) document.getElementById('edit_dept').value = deptId;
+    document.getElementById('edit_designation').value = desig;
+    document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_status').value = status;
+    openModal('editEmpModal');
+}
+
+function openResetModal(id, name, empId) {
+    document.getElementById('reset_user_id').value = id;
+    document.getElementById('reset_user_name').value = name + ' (' + empId + ')';
+    openModal('resetModal');
+}
+</script>
+{% endblock %}

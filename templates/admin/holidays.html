@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Holidays - Smart HRMS{% endblock %}
+{% block page_title %}Company Holiday Calendar Management{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <!-- Existing Holidays -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-umbrella-beach" style="color: var(--brand-primary);"></i> Company Holidays
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Holiday Title</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in holidays %}
+                    <tr>
+                        <td><strong>{{ h['holiday_date'] }}</strong></td>
+                        <td>{{ h['title'] }}</td>
+                        <td><span class="badge badge-approved">{{ h['type'] }}</span></td>
+                        <td>
+                            <form action="{{ url_for('admin.holidays') }}" method="POST" onsubmit="return confirm('Delete this holiday?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="holiday_id" value="{{ h['id'] }}">
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No holidays configured.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Holiday Form -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-plus-circle" style="color: var(--success);"></i> Add Holiday
+            </div>
+        </div>
+
+        <form action="{{ url_for('admin.holidays') }}" method="POST">
+            <input type="hidden" name="action" value="add">
+
+            <div class="form-group">
+                <label class="form-label" for="title">Holiday Title *</label>
+                <input type="text" id="title" name="title" class="form-control" placeholder="e.g. New Year Holiday" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="holiday_date">Holiday Date *</label>
+                <input type="date" id="holiday_date" name="holiday_date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="day_of_week">Day of Week</label>
+                <input type="text" id="day_of_week" name="day_of_week" class="form-control" placeholder="e.g. Thursday">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="type">Category Type</label>
+                <select id="type" name="type" class="form-control">
+                    <option value="National">National Holiday</option>
+                    <option value="Regional">Regional Holiday</option>
+                    <option value="Optional">Optional Holiday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" placeholder="Optional notes..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fas fa-save"></i> Save Holiday
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

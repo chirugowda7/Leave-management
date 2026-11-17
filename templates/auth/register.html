@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Self-Registration - Abhyudaya Techno Solutions Pvt Ltd{% endblock %}
+
+{% block content %}
+<div style="min-height: 85vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 520px;" class="card">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="ATS Logo" style="width: 130px; height: 80px; margin-bottom: 10px; object-fit: contain;">
+            <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);">Abhyudaya Techno Solutions Pvt Ltd</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Employee Self-Registration Portal</p>
+        </div>
+
+        <form action="{{ url_for('auth.register') }}" method="POST" id="registerForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="emp_id">Employee ID (Auto-Generated) *</label>
+                    <input type="text" id="emp_id" name="emp_id" class="form-control" placeholder="Auto-generated ID" readonly style="background-color: var(--bg-primary); font-weight: 700; color: var(--brand-primary);" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="dob">Date of Birth *</label>
+                    <input type="date" id="dob" name="dob" class="form-control" required onchange="fetchAutoEmpId()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Corporate Email *</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="e.g. new.emp4@company.com" required onchange="fetchAutoEmpId()">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="full_name">Full Name (Optional if pre-registered)</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" placeholder="e.g. Alex Morgan">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="phone">Mobile Phone</label>
+                <input type="text" id="phone" name="phone" class="form-control" placeholder="+1 555-0199">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="password">Password *</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 chars" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Confirm Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                <i class="fas fa-check-circle"></i> Verify & Register Account
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; background: var(--bg-primary); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-secondary);">
+            <i class="fas fa-info-circle" style="color: var(--info);"></i>
+            <strong>Test Demo Verification Credentials:</strong><br>
+            Email: <code>new.emp4@company.com</code> | DOB: <code>1995-05-15</code>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; font-size: 0.85rem;">
+            Already registered? <a href="{{ url_for('auth.login') }}" style="color: var(--brand-primary); font-weight: 600; text-decoration: none;">Sign In</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function fetchAutoEmpId() {
+    const email = document.getElementById('email').value.trim();
+    const dob = document.getElementById('dob').value.trim();
+    const url = `/generate-emp-id?email=${encodeURIComponent(email)}&dob=${encodeURIComponent(dob)}`;
+    
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (data.emp_id) {
+                document.getElementById('emp_id').value = data.emp_id;
+            }
+        })
+        .catch(err => console.error('Error fetching Employee ID:', err));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAutoEmpId();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}HR Dashboard - Smart HRMS{% endblock %}
+{% block page_title %}HR Management & Exception Workspace{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Row -->
+<div class="grid-3">
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-sl"><i class="fas fa-exclamation-circle"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Pending Leave Approvals</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ pending_hr_approvals_cnt }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-al"><i class="fas fa-user-friends"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Active Employees</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ total_employees }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;">
+        <div class="balance-icon icon-hdl"><i class="fas fa-sitemap"></i></div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Departments</div>
+            <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary);">{{ active_departments_cnt }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Approvals Queue Grid -->
+<div class="grid-2">
+    <!-- Approvals Queue -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-user-check" style="color: var(--brand-primary);"></i> Pending Leave Approvals Queue
+            </div>
+            <a href="{{ url_for('hr.pending_approvals') }}" style="font-size: 0.85rem; color: var(--brand-primary); font-weight: 600; text-decoration: none;">View Queue</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Req #</th>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>Days</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr>
+                        <td><strong>{{ req['request_number'] }}</strong></td>
+                        <td>{{ req['applicant_name'] }}</td>
+                        <td>{{ req['leave_type_name'] }}</td>
+                        <td>{{ req['total_days'] }}</td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <form action="{{ url_for('hr.handle_action', request_id=req['id']) }}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+                                </form>
+                                <form action="{{ url_for('hr.handle_action', request_id=req['id']) }}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i> No escalated HR approvals pending.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Interactive Department Analytics Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-chart-pie" style="color: var(--brand-primary);"></i> Department Leave Distribution
+            </div>
+        </div>
+        <canvas id="deptLeaveChart" height="220"></canvas>
+    </div>
+</div>
+{% endblock %}
